@@ -1,40 +1,118 @@
 <template>
   <div class="hello">
     <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
+  </div>
+   <div class="container">
+      <h2 v-if="pomodoroMode">Modo de trabalho</h2>
+      <h2 v-if="!pomodoroMode">Modo de intervalo</h2>
+  </div>
+  <div class="container">
+    <div class="text-center">
+      {{ minutos }}:{{ segundos }}
+    </div>
+  </div>
+  <div class="container">
+      <button v-on:click="start"><i class="fas fa-play"></i> start</button>
+      <button v-on:click="stop"><i class="fas fa-stop"></i> stop</button>
+  </div>
+   <div class="container">
+      <button v-if="!working" v-on:click="diminuirTempo"><i class="fas fa-minus"></i></button>
+      <button v-if="!working" v-on:click="alterarMode"> mode </button>
+      <button v-if="!working" v-on:click="aumentarTempo"><i class="fas fa-plus"></i></button>
+  </div>
+  <div class="container">
+      <h1>Contador de pomodoros: {{contador}}</h1>
   </div>
 </template>
 
 <script>
+import alarm from '@/assets/alarm.mp3'
 export default {
   name: 'HelloWorld',
   props: {
     msg: String
+  },
+  data(){
+    return{
+      minutos: 25,
+      segundos: '00',
+      working: false,
+      pomodoroMode: true,
+      contador: 0
+    }
+  },
+  methods: {
+    start() {
+      this.working = true
+      if(this.finalizado()){
+        this.segundos = '00'
+        this.minutos = this.pomodoroMode ? 25 : 5
+        return
+      }
+      if(this.iniciado()){
+         let segundo = Number(this.segundos)
+         segundo <= 10 ? this.segundos = `0${this.segundos - 1}` : this.segundos = `${this.segundos - 1}`;
+         return
+      }
+      this.segundos = '59'
+      this.minutos--;
+    },
+    stop() {
+      this.working = false
+    },
+    alterarMode(){
+      this.pomodoroMode = !this.pomodoroMode
+    },
+    aumentarTempo() {
+      this.minutos++
+    },
+    diminuirTempo() {
+      this.minutos--
+    },
+    iniciado(){
+      return this.segundos != '00' && ((this.pomodoroMode && this.minutos != 25) || (!this.pomodoroMode && this.minutos != 5))
+    },
+    finalizado(){
+      return this.segundos == '00' && this.minutos == 0
+    },
+  },
+  watch:{
+    segundos:{
+      handler(value) {
+        let segundo = Number(value)
+        if(this.working){
+          setTimeout(() => {
+            if(segundo == 0){
+              if(this.minutos == 0){
+                this.working = false
+                const audio = new Audio(alarm)
+                audio.play()
+                if(this.pomodoroMode){
+                  this.contador++
+                }
+                return
+              }
+              this.minutos--;
+              this.segundos = '59'            
+            }
+            segundo <= 10 ? this.segundos = `0${this.segundos - 1}` : this.segundos = `${this.segundos - 1}`;
+          }, 10);
+        }
+      }
+    },
+    pomodoroMode : {
+      handler(value) {
+        value ? this.minutos = 25 : this.minutos = 5
+        this.segundos = '00'
+      }
+    },
+    contador : {
+      handler(value) {
+        if (value % 4 == 0){
+          alert("Que tal descansar por 10 minutos ?");
+        }
+      }
+    }
   }
 }
 </script>
