@@ -108,7 +108,7 @@ export default {
             segundo <= 10
               ? (this.segundos = `0${this.segundos - 1}`)
               : (this.segundos = `${this.segundos - 1}`);
-          }, 10);
+          }, 1000);
         }
       },
     },
